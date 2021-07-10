@@ -1,0 +1,4 @@
+github.com/jspc-bots/bottom v1.3.0 h1:WGaaMf25zCpLELzBZr3UexTb/f+ys2+8kLjNrLSgI5M=
+github.com/jspc-bots/bottom v1.3.0/go.mod h1:UF40LnV7LLZ/tgGW18PIplawzBx9a4/BeCFKHPhBgUo=
+github.com/lrstanley/girc v0.0.0-20210611213246-771323f1624b h1:jrLvME7VuLW6NRysbiZtenTB9QcNlR9RPKK4LFfZn60=
+github.com/lrstanley/girc v0.0.0-20210611213246-771323f1624b/go.mod h1:liX5MxHPrwgHaKowoLkYGwbXfYABh1jbZ6FpElbGF1I=
