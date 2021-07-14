@@ -1,20 +1,25 @@
-# IRC Bot
+# Databank Korean to English (and back again!) bot
 
-Do some stuff over IRC
+A small slack bot which translates Korean slack messages into English, and English messages into Korean, which it does via [papago](https://developers.naver.com/docs/papago/README.md)
 
-This bot makes a couple of assumptions:
+It can be invited into slack channels, where it will:
 
-1. You've a SASL account for this bot to use
-2. You've enabled actions notifications in github for failed/successful runs
+1. Listen out for new messages
+2. Translate messages from one language to the other (based on character encodings, and sentence structure)
+3. Respond to messages again in a thread
 
 This bot requires the following env vars:
 
-* `$SASL_USER` - the user to connect with
-* `$SASL_PASSWORD` - the password to connect with
-* `$SERVER` - IRC connection details, as `irc://server:6667` or `ircs://server:6697` (`ircs` implies irc-over-tls)
-* `$VERIFY_TLS` - Verify TLS, or sack it off. This is of interest to people, like me, running an ircd on localhost with a self-signed cert. Matches "true" as true, and anything else as false
+| Env var                | Description                                                                                                 |
+|------------------------|-------------------------------------------------------------------------------------------------------------|
+| `$SLACK_BOT_TOKEN`     | The bot token used to authenticate against slack. See: https://api.slack.com/authentication/token-types#bot |
+| `$SLACK_APP_TOKEN`     | The app token used to perform app level tasks. See: https://api.slack.com/authentication/token-types#app    |
+| `$NAVER_CLIENT_ID`     | See: https://developers.naver.com/docs/papago/README.md                                                     |
+| `$NAVER_CLIENT_SECRET` | See: https://developers.naver.com/docs/papago/README.md                                                     |
 
-The SASL mechanism is hardcoded to PLAIN.
+## Installation
+
+Included in this project is a `manifest.yml` file which can be used to configure slack.
 
 ## Building
 
