@@ -8,6 +8,9 @@ It can be invited into slack channels, where it will:
 2. Translate messages from one language to the other (based on character encodings, and sentence structure)
 3. Respond to messages again in a thread
 
+
+![sequence diagram showing the flow of data in this slack bot](doc/sequence.png)
+
 This bot requires the following env vars:
 
 | Env var                | Description                                                                                                 |
