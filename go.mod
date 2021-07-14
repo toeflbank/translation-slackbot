@@ -1,4 +1,4 @@
-module github.com/jspc-bot/ko-to-en
+module github.com/toeflbank/translation-slackbot
 
 go 1.16
 
