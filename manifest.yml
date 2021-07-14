@@ -1,0 +1,17 @@
+_metadata:
+  major_version: 1
+display_information:
+  name: Databank Translator Bot
+  description: Auto translation for slack messages
+settings:
+  org_deploy_enabled: true
+  socket_mode_enabled: true
+features:
+  bot_user:
+    display_name: "translator"
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - "chat:write"
+      - "conversations.connect:read"

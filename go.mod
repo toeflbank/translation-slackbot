@@ -1,8 +1,8 @@
-module github.com/jspc-bot/irc-bot-template
+module github.com/jspc-bot/ko-to-en
 
 go 1.16
 
 require (
-	github.com/jspc-bots/bottom v1.3.0
-	github.com/lrstanley/girc v0.0.0-20210611213246-771323f1624b
+	github.com/abadojack/whatlanggo v1.0.1
+	github.com/slack-go/slack v0.9.2
 )

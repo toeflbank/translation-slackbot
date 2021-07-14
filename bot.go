@@ -1,36 +1,152 @@
 package main
 
 import (
-	"github.com/jspc-bots/bottom"
-	"github.com/lrstanley/girc"
+	"encoding/json"
+	"log"
+	"net/http"
+	"net/url"
+	"strings"
+
+	"github.com/abadojack/whatlanggo"
+	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
+	"github.com/slack-go/slack/socketmode"
 )
 
-type Bot struct {
-	bottom bottom.Bottom
+type Response struct {
+	Message struct {
+		Result struct {
+			Text string `json:"translatedText"`
+		}
+	}
 }
 
-func New(user, password, server string, verify bool) (b Bot, err error) {
-	b.bottom, err = bottom.New(user, password, server, verify)
-	if err != nil {
-		return
-	}
+type Bot struct {
+	s     *socketmode.Client
+	slack *slack.Client
 
-	b.bottom.Client.Handlers.Add(girc.CONNECTED, func(c *girc.Client, e girc.Event) {
-		c.Cmd.Join(Chan)
-	})
+	client       *http.Client
+	clientID     string
+	clientSecret string
+}
 
-	router := bottom.NewRouter()
-	router.AddRoute(`hello\s+world\!`, b.hello)
+func New(slackBotToken, slackAppToken, clientID, clientSecret string) (b Bot, err error) {
+	b.slack = slack.New(slackBotToken,
+		slack.OptionAppLevelToken(slackAppToken),
+	)
 
-	b.bottom.Middlewares.Push(router)
+	b.s = socketmode.New(
+		b.slack,
+	)
+
+	go b.s.Run()
+
+	b.client = http.DefaultClient
+
+	b.clientID = clientID
+	b.clientSecret = clientSecret
 
 	return
 }
 
-// hello will respond to a sender on the appropriate channel (an irc channel if the
-// message was recieved in a channel, and a message if received directly
-func (b Bot) hello(sender, channel string, groups []string) error {
-	b.bottom.Client.Cmd.Messagef(channel, "And hello to you too %s", sender)
+// Process will:
+//  1. Listen to slack events
+//  2. On channel message, detect character encoding
+//  3. Perform appropriate translation
+//  4. Respond as thread reply
+func (b Bot) Process() error {
+	for evt := range b.s.Events {
+		switch evt.Type {
+		case socketmode.EventTypeEventsAPI:
+			eventsAPIEvent, _ := evt.Data.(slackevents.EventsAPIEvent)
+
+			switch eventsAPIEvent.Type {
+			case slackevents.CallbackEvent:
+				innerEvent := eventsAPIEvent.InnerEvent
+
+				switch ev := innerEvent.Data.(type) {
+				case *slackevents.MessageEvent:
+					if ev.BotID != "" {
+						continue
+					}
+
+					var (
+						body string
+						err  error
+					)
+
+					if whatlanggo.Detect(ev.Text).Lang == whatlanggo.Kor {
+						body, err = b.toEN(ev.Text)
+					} else {
+						body, err = b.toKO(ev.Text)
+					}
+
+					if err != nil {
+						log.Print(err)
+
+						continue
+					}
+
+					ts := ev.TimeStamp
+					if ev.ThreadTimeStamp != "" {
+						ts = ev.ThreadTimeStamp
+					}
+
+					b.slack.PostMessage(ev.Channel,
+						slack.MsgOptionText(body, false),
+						slack.MsgOptionTS(ts),
+					)
+				}
+			}
+
+			b.s.Ack(*evt.Request)
+
+		}
+	}
 
 	return nil
+}
+
+func (b Bot) toKO(msg string) (string, error) {
+	return b.translate("en", "ko", msg)
+}
+
+func (b Bot) toEN(msg string) (string, error) {
+	return b.translate("ko", "en", msg)
+}
+
+func (b Bot) translate(from, to, msg string) (s string, err error) {
+	form := url.Values{}
+	form.Set("source", from)
+	form.Set("target", to)
+	form.Set("text", msg)
+
+	req, err := http.NewRequest("POST", "https://openapi.naver.com/v1/papago/n2mt", strings.NewReader(form.Encode()))
+	if err != nil {
+		return
+	}
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+	req.Header.Add("X-Naver-Client-Id", b.clientID)
+	req.Header.Add("X-Naver-Client-Secret", b.clientSecret)
+
+	resp, err := b.client.Do(req)
+	if err != nil {
+		return
+	}
+
+	defer resp.Body.Close()
+
+	dec := json.NewDecoder(resp.Body)
+
+	r := new(Response)
+	err = dec.Decode(r)
+
+	if err != nil {
+		return
+	}
+
+	s = r.Message.Result.Text
+
+	return
 }
