@@ -21,11 +21,25 @@ type Response struct {
 	}
 }
 
-type Bot struct {
-	s     *socketmode.Client
-	slack *slack.Client
+type socketmodeClient interface {
+	Ack(socketmode.Request, ...interface{})
+	Run() error
+}
 
-	client       *http.Client
+type slackClient interface {
+	PostMessage(string, ...slack.MsgOption) (string, string, error)
+}
+
+type httpClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
+type Bot struct {
+	eventChan chan socketmode.Event
+	s         socketmodeClient
+	slack     slackClient
+
+	client       httpClient
 	clientID     string
 	clientSecret string
 }
@@ -36,8 +50,10 @@ func New(slackBotToken, slackAppToken, clientID, clientSecret string) (b Bot, er
 	)
 
 	b.s = socketmode.New(
-		b.slack,
+		b.slack.(*slack.Client),
 	)
+
+	b.eventChan = b.s.(*socketmode.Client).Events
 
 	go b.s.Run()
 
@@ -55,7 +71,7 @@ func New(slackBotToken, slackAppToken, clientID, clientSecret string) (b Bot, er
 //  3. Perform appropriate translation
 //  4. Respond as thread reply
 func (b Bot) Process() error {
-	for evt := range b.s.Events {
+	for evt := range b.eventChan {
 		switch evt.Type {
 		case socketmode.EventTypeEventsAPI:
 			eventsAPIEvent, _ := evt.Data.(slackevents.EventsAPIEvent)
