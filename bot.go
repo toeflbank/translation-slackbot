@@ -13,7 +13,9 @@ import (
 	"github.com/slack-go/slack/socketmode"
 )
 
-type Response struct {
+// PapagoResponse holds a subset of the fields received in
+// translation responses from Papago.
+type PapagoResponse struct {
 	Message struct {
 		Result struct {
 			Text string `json:"translatedText"`
@@ -34,6 +36,9 @@ type httpClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+// Bot provides a control plane to both slack and papago,
+// responding to messages in channels and translating from
+// ko -> en, and en -> ko, depending on the source language
 type Bot struct {
 	eventChan chan socketmode.Event
 	s         socketmodeClient
@@ -44,6 +49,8 @@ type Bot struct {
 	clientSecret string
 }
 
+// New creates a new bot, and subscribes to slack events for Process
+// to start processing
 func New(slackBotToken, slackAppToken, clientID, clientSecret string) (b Bot, err error) {
 	b.slack = slack.New(slackBotToken,
 		slack.OptionAppLevelToken(slackAppToken),
@@ -155,7 +162,7 @@ func (b Bot) translate(from, to, msg string) (s string, err error) {
 
 	dec := json.NewDecoder(resp.Body)
 
-	r := new(Response)
+	r := new(PapagoResponse)
 	err = dec.Decode(r)
 
 	if err != nil {
