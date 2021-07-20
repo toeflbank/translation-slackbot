@@ -34,12 +34,12 @@ func (d *dummySlackClient) PostMessage(_ string, opts ...slack.MsgOption) (_, _ 
 	return
 }
 
-type dummyHttpClient struct {
+type dummyHTTPClient struct {
 	status int
 	err    bool
 }
 
-func (d dummyHttpClient) Do(_ *http.Request) (resp *http.Response, err error) {
+func (d dummyHTTPClient) Do(_ *http.Request) (resp *http.Response, err error) {
 	if d.err {
 		err = fmt.Errorf("an error")
 	}
@@ -70,9 +70,9 @@ func TestBot_Process(t *testing.T) {
 		httpclient  httpClient
 		expect      string
 	}{
-		{"happy path, english message", "Good morning!", &dummySlackClient{}, dummyHttpClient{}, "foo"},
-		{"happy path, korean message", "오.. 신기합니다.", &dummySlackClient{}, dummyHttpClient{}, "foo"},
-		{"papago errors", "message", &dummySlackClient{}, dummyHttpClient{err: true}, ""},
+		{"happy path, english message", "Good morning!", &dummySlackClient{}, dummyHTTPClient{}, "foo"},
+		{"happy path, korean message", "오.. 신기합니다.", &dummySlackClient{}, dummyHTTPClient{}, "foo"},
+		{"papago errors", "message", &dummySlackClient{}, dummyHTTPClient{err: true}, ""},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			b := Bot{

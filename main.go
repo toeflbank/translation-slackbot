@@ -5,15 +5,15 @@ import (
 )
 
 var (
-	SlackBotToken = os.Getenv("SLACK_BOT_TOKEN")
-	SlackAppToken = os.Getenv("SLACK_APP_TOKEN")
+	slackBotToken = os.Getenv("SLACK_BOT_TOKEN")
+	slackAppToken = os.Getenv("SLACK_APP_TOKEN")
 
-	NaverClientId     = os.Getenv("NAVER_CLIENT_ID")
-	NaverClientSecret = os.Getenv("NAVER_CLIENT_SECRET")
+	naverClientID     = os.Getenv("NAVER_CLIENT_ID")
+	naverClientSecret = os.Getenv("NAVER_CLIENT_SECRET")
 )
 
 func main() {
-	c, err := New(SlackBotToken, SlackAppToken, NaverClientId, NaverClientSecret)
+	c, err := New(slackBotToken, slackAppToken, naverClientID, naverClientSecret)
 	if err != nil {
 		panic(err)
 	}
