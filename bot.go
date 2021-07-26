@@ -11,6 +11,7 @@ import (
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
+	"go.uber.org/zap"
 )
 
 // PapagoResponse holds a subset of the fields received in
@@ -47,6 +48,8 @@ type Bot struct {
 	client       httpClient
 	clientID     string
 	clientSecret string
+
+	logger *zap.SugaredLogger
 }
 
 // New creates a new bot, and subscribes to slack events for Process
@@ -61,6 +64,13 @@ func New(slackBotToken, slackAppToken, clientID, clientSecret string) (b Bot, er
 	)
 
 	b.eventChan = b.s.(*socketmode.Client).Events
+
+	l, err := zap.NewProduction()
+	if err != nil {
+		return
+	}
+
+	b.logger = l.Sugar()
 
 	go b.s.Run()
 
@@ -94,15 +104,24 @@ func (b Bot) Process() error {
 					}
 
 					var (
-						body string
-						err  error
+						from, to string
+						body     string
+						err      error
 					)
 
 					if whatlanggo.Detect(ev.Text).Lang == whatlanggo.Kor {
+						from = "ko"
+						to = "en"
+
 						body, err = b.toEN(ev.Text)
 					} else {
+						from = "en"
+						to = "ko"
+
 						body, err = b.toKO(ev.Text)
 					}
+
+					b.logline(ev.Channel, from, to, body, err)
 
 					if err != nil {
 						log.Print(err)
@@ -172,4 +191,14 @@ func (b Bot) translate(from, to, msg string) (s string, err error) {
 	s = r.Message.Result.Text
 
 	return
+}
+
+func (b Bot) logline(channel, from, to, msg string, err error) {
+	b.logger.Infow("processed message",
+		"from", from,
+		"to", to,
+		"msg", msg,
+		"msg_length", len(msg),
+		"error", err,
+	)
 }

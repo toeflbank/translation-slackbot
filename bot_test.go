@@ -10,6 +10,7 @@ import (
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
+	"go.uber.org/zap"
 )
 
 type dummySocketmodeClient struct{}
@@ -75,11 +76,13 @@ func TestBot_Process(t *testing.T) {
 		{"papago errors", "message", &dummySlackClient{}, dummyHTTPClient{err: true}, ""},
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			l, _ := zap.NewDevelopment()
 			b := Bot{
 				s:         dummySocketmodeClient{},
 				slack:     test.slackClient,
 				client:    test.httpclient,
 				eventChan: make(chan socketmode.Event),
+				logger:    l.Sugar(),
 			}
 
 			go func() {
