@@ -35,18 +35,21 @@ $ go build
 Or via docker:
 
 ```bash
-$ docker build -t foo .
+$ docker build -t translation-slackbot .
 ```
 
 ## Running
 
-If you've built the app yourself, then happy day- there's your binary!
-
-Otherwise I suggest via docker:
+If you've built the app yourself, using go, then you may run:
 
 ```bash
-$ docker build -t foo .
-$ docker run foo
+SLACK_BOT_TOKEN="see above" SLACK_APP_TOKEN="see above" NAVER_CLIENT_ID="see above" ./translation-slackbot
 ```
 
-(Setting the above environment variables accordingly)
+Otherwise I suggest building via docker (see above) and running with:
+
+```bash
+$ docker run --name translation-slackbot -e SLACK_BOT_TOKEN="see above" -e SLACK_APP_TOKEN="see above" -e NAVER_CLIENT_ID="see above" translation-slackbot
+```
+
+(Setting the above environment variables according to the values in the environment variables table in the document)
